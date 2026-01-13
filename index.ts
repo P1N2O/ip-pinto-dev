@@ -5,23 +5,26 @@ const server = Bun.serve({
     const url = new URL(req.url);
     const format = url.searchParams.get("format") || url.searchParams.get("fmt") || url.pathname.split(".")[1] || "text";
     const callback = url.searchParams.get("callback") || url.searchParams.get("cb") || "callback";
-    const isGeo = url.pathname === "/geo";
+    const isGeo = url.pathname.startsWith("/geo");
 
-    const ip = req.headers.get("cf-connecting-ipv6") || req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") ||
-      (req.headers.has("cf-ray") ? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() : undefined) ||
-      server.requestIP(req)?.address || "unknown";
+    const ip = req.headers.get("cf-connecting-ipv6") || req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || server.requestIP(req)?.address || "localhost";
 
     const country = req.headers.get("cf-ipcountry") || undefined;
     const asRegion = req.headers.get("cf-ray")?.split("-")[1] || undefined;
     const geo = isGeo ? {
       flag: country && getFlag(country),
+      continent: req.headers.get("cf-ipcontinent") || undefined,
       country,
       region: req.headers.get("cf-region") || undefined,
+      regionCode: req.headers.get("cf-region-code") || undefined,
       city: req.headers.get("cf-ipcity") || undefined,
+      postalCode: req.headers.get("cf-postal-code") || undefined,
       latitude: req.headers.get("cf-iplatitude") || undefined,
       longitude: req.headers.get("cf-iplongitude") || undefined,
+      timezone: req.headers.get("cf-timezone") || undefined,
       asRegion,
-      asOrganization: req.headers.get("x-asn") || undefined,
+      asn: req.headers.get("x-asn") || undefined,
+      asOrganization: req.headers.get("cf-asorganization") || undefined,
     } : undefined;
 
     const payload = { ip, ...geo };
@@ -36,6 +39,7 @@ const server = Bun.serve({
     const commonHeaders = {
       "Connection": "keep-alive",
       "Keep-Alive": "timeout=5, max=1000",
+      'Access-Control-Allow-Origin': '*',
       "X-Powered-By": `${process.env.POWERED_BY || req.headers.get("host")}`,
       "X-Client-IP": ip,
     };
