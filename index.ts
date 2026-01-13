@@ -9,14 +9,15 @@ const server = Bun.serve({
     const callback = url.searchParams.get("callback") || url.searchParams.get("cb") || "callback";
     const showDetails = url.pathname !== "/";
 
-    const ip = url.searchParams.get("ip") || req.headers.get("cf-connecting-ipv6") || req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || server.requestIP(req)?.address || "localhost";
-    const details = showDetails ? lookupDetails(ip, req) : undefined;
+    const clientIp = req.headers.get("cf-connecting-ipv6") || req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || server.requestIP(req)?.address || "localhost";
+    const ip = url.searchParams.get("ip") || clientIp;
+    const details = showDetails ? lookupDetails({ip, isSearching: ip !== clientIp, req}) : undefined;
     const payload = { ip, ...details };
     const timestamp = new Date().toISOString();
 
     // DEBUG
     if (process.env.DEBUG !== "false") {
-      console.log(`[${timestamp}] ✅ ${req.method} request from ${ip}`);
+      console.log(`[${timestamp}] ✅ ${req.method} request from ${clientIp}`);
     }
 
     const commonHeaders = {
@@ -24,7 +25,7 @@ const server = Bun.serve({
       "Keep-Alive": "timeout=5, max=1000",
       "Access-Control-Allow-Origin": "*",
       "X-Powered-By": `${process.env.POWERED_BY || req.headers.get("host")}`,
-      "X-Client-IP": ip,
+      "X-Client-IP": clientIp,
     };
 
     // JSON
@@ -111,10 +112,9 @@ function serializeXML(payload: Record<string, unknown>): string {
 const filepath = process.env.GEOIPUPDATE_DB_PATH || "/app/.data/db"
 const asnReader = await maxmind.open(filepath + "/GeoLite2-ASN.mmdb");
 const cityReader = await maxmind.open(filepath + "/GeoLite2-City.mmdb");
-function lookupDetails(ip: string, req?: Request) {
+function lookupDetails({ ip, isSearching = false, req}: { ip: string, isSearching?: boolean, req?: Request }) {
   const r: any = { ...asnReader.get(ip), ...cityReader.get(ip) };
-  const cf = req?.headers;
-  console.log(r);
+  const cf = !isSearching ? req?.headers : undefined;
   
   if (!r) return undefined;
 
