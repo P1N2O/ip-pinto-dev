@@ -1,5 +1,5 @@
-# ip-pinto-dev
-A simple HTTP server that returns the visitor's IP address in Plain Text, JSON, or JSONP and XML format.
+# ip.8080.li
+A simple HTTP server that returns the visitor's IP address in Plain Text, JSON, JSONP or XML format along with optional geographic information.
 
 ## Install dependencies
 ```bash

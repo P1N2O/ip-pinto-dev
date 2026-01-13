@@ -1,7 +1,7 @@
 services:
-  ip-pinto-dev:
-    container_name: ip-pinto-dev
-    image: ip-pinto-dev:latest
+  ip.8080.li:
+    container_name: ip.8080.li
+    image: ip.8080.li:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -11,7 +11,7 @@ services:
     environment:
       - PORT=3000
       - DEBUG=true
-      - POWERED_BY="ip.pinto.dev"
+      - POWERED_BY="ip.8080.li"
 networks:
   default:
       name: cloudflare
