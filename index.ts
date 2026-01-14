@@ -7,10 +7,9 @@ const server = Bun.serve({
     const url = new URL(req.url);
     const format = url.searchParams.get("format") || url.searchParams.get("fmt") || url.pathname.split(".")[1] || "text";
     const callback = url.searchParams.get("callback") || url.searchParams.get("cb") || "callback";
-    const showDetails = !/^\/(?:$|ip)/i.test(url.pathname);
-
     const clientIp = req.headers.get("cf-connecting-ipv6") || req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || server.requestIP(req)?.address || "localhost";
     const ip = url.searchParams.get("ip") || clientIp;
+    const showDetails = !/^\/(?:$|ip)/i.test(url.pathname) || url.searchParams.get("ip");
     const details = showDetails ? lookupDetails({ip, isSearching: ip !== clientIp, req}) : undefined;
     const payload = { ip, ...details };
     const timestamp = new Date().toISOString();
